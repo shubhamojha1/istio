@@ -144,6 +144,30 @@ func TestPerRevisionElection(t *testing.T) {
 	close(stop4)
 }
 
+func TestPerRevisionLeaseLabels(t *testing.T) {
+	client := fake.NewClientset()
+	watcher := &fakeDefaultWatcher{"canary"}
+	_, stop := createPerRevisionElection(t, "pod1", "canary", watcher, true, client)
+	defer close(stop)
+
+	leases, err := client.CoordinationV1().Leases("ns").List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(leases.Items) != 1 {
+		t.Fatalf("expected 1 lease, got %d", len(leases.Items))
+	}
+	lease := leases.Items[0]
+	rev, ok := lease.Labels["istio.io/rev"]
+	if !ok || rev != "canary" {
+		t.Errorf("expected label istio.io/rev=canary, got %v", lease.Labels)
+	}
+	comp, ok := lease.Labels["operator.istio.io/component"]
+	if !ok || comp != "Pilot" {
+		t.Errorf("expected label operator.istio.io/component=Pilot, got %v", lease.Labels)
+	}
+}
+
 func TestPrioritizedLeaderElection(t *testing.T) {
 	client := fake.NewClientset()
 	watcher := &fakeDefaultWatcher{defaultRevision: "red"}

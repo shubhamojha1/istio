@@ -59,6 +59,7 @@ func (ll *LeaseLock) Create(ctx context.Context, ler LeaderElectionRecord) error
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      ll.LeaseMeta.Name,
 			Namespace: ll.LeaseMeta.Namespace,
+			Labels:    ll.LeaseMeta.Labels,
 		},
 		Spec: LeaderElectionRecordToLeaseSpec(&ler),
 	}
